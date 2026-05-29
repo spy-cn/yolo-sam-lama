@@ -142,9 +142,10 @@ if __name__ == "__main__":
     # 使用现代化的 pathlib 获取绝对路径
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+    IMG_NAME = "person_road_01.jpeg"
     # 配置输入输出路径
-    INPUT_IMG = str(BASE_DIR / "data/person" / "person_road_01.jpeg")
-    OUTPUT_IMG = str(BASE_DIR / "data/out_img" / "street_cleaned_yolo_lama.jpg")
+    INPUT_IMG = str(BASE_DIR / "data/person" / f"{IMG_NAME}")
+    OUTPUT_IMG = str(BASE_DIR / "data/out_img" / f"{IMG_NAME}_ensure_yolo_lama.jpg")
 
     # 定义需要擦除的目标标签（YOLO-World 支持任意文本标签）
     TARGETS = ["person"]
