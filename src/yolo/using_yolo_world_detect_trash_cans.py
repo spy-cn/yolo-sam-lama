@@ -37,7 +37,13 @@ def predict_image(image_path, model_path="yolov8s-worldv2.pt"):
                 f"检测到目标 -> 类别: {class_name}, 置信度: {conf:.2f}, "
                 f"坐标: [{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]"
             )
+        img_name = Path(image_path).stem
+        output_dir = BASE_DIR / "data/out_img"
+        output_dir.mkdir(parents=True, exist_ok=True)
 
+        output_path = output_dir / f"{img_name}_detected.jpg"
+        cv2.imwrite(str(output_path), annotated_frame)
+        print(f"检测结果已保存: {output_path}")
         # 弹窗显示结果
         cv2.imshow("YOLO-World Detection", annotated_frame)
         cv2.waitKey(0)  # 按任意键退出窗口
@@ -49,7 +55,7 @@ if __name__ == "__main__":
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
     # 配置输入图片路径
-    INPUT_IMG = str(BASE_DIR / "data/trash_cans" / "trash_cans_01.jpg")
+    INPUT_IMG = str(BASE_DIR / "data/trash_cans" / "roadside_garbage.jpg")
 
     # 配置模型路径
     YOLO_PATH = str(BASE_DIR / "models" / "yolov8s-worldv2.pt")

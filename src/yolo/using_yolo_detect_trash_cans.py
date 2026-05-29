@@ -19,7 +19,14 @@ def predict_image(image_path, model_path="yolo11n.pt"):
     for result in results:
         # 获取带有绘制好边界框的 numpy 图像
         annotated_frame = result.plot()
-
+        scale = 960 / annotated_frame.shape[1]
+        display_img = cv2.resize(
+            annotated_frame,
+            None,
+            fx=scale,
+            fy=scale,
+            interpolation=cv2.INTER_AREA
+        )
         # 打印检测到的边界框坐标和类别
         for box in result.boxes:
             x1, y1, x2, y2 = box.xyxy[0].tolist()
@@ -29,7 +36,7 @@ def predict_image(image_path, model_path="yolo11n.pt"):
                 f"检测到目标 -> 类别ID: {int(cls)}, 置信度: {conf:.2f}, 坐标: [{int(x1)}, {int(y1)}, {int(x2)}, {int(y2)}]")
 
         # 弹窗显示结果
-        cv2.imshow("YOLO Detection", annotated_frame)
+        cv2.imshow("YOLO Detection", display_img)
         cv2.waitKey(0)  # 按任意键退出窗口
         cv2.destroyAllWindows()
 
@@ -38,7 +45,7 @@ if __name__ == "__main__":
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
     # 配置输入输出路径
-    INPUT_IMG = str(BASE_DIR / "data/trash_cans" / "trash_cans_01.jpg")
+    INPUT_IMG = str(BASE_DIR / "data/trash_cans" / "roadside_garbage.jpg")
 
     YOLO_PATH = str(BASE_DIR / "models" / "yolo11n.pt")
     # 提示：默认模型没有单独的垃圾桶类，识别自己的垃圾桶需要替换为 best.pt
