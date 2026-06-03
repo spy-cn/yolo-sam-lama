@@ -11,6 +11,8 @@ YOUTU_4B_URL = "http://192.168.21.128:8001/v1/chat/completions"
 YOUTU_HEADERS = {"Content-Type": "application/json", "Authorization": "Bearer sk-admin-youtu8b123"}
 GLM_5B_URL = "http://192.168.21.128:8000/v1/chat/completions"
 GLM_HEADERS = {"Content-Type": "application/json", "Authorization": "Bearer sk-admin-ford-glm-5b-123"}
+GLM_5B_Q4_URL = "http://192.168.21.128:8002/v1/chat/completions"
+GLM_Q4_HEADERS = {"Content-Type": "application/json", "Authorization": "Bearer sk-admin-ford-glm-5b-123"}
 
 PROMPT_TEXT = "用中文描述一下这张图片"
 
@@ -99,6 +101,7 @@ def batch_process_multiple_dirs(target_dirs: list, output_excel: str = "multi_di
     models_to_run = [
         {"name": "YOUTU_4B", "url": YOUTU_4B_URL, "headers": YOUTU_HEADERS},
         {"name": "GLM_5B", "url": GLM_5B_URL, "headers": GLM_HEADERS},
+        {"name": "GLM_5B_Q4", "url": GLM_5B_Q4_URL, "headers": GLM_Q4_HEADERS},
     ]
 
     # 2. 循环处理每一张图片
@@ -167,4 +170,4 @@ if __name__ == "__main__":
     ]
 
     # 运行批量处理
-    batch_process_multiple_dirs(target_dirs=TARGET_FOLDERS, output_excel="multi_folder_outputs.xlsx")
+    batch_process_multiple_dirs(target_dirs=TARGET_FOLDERS, output_excel="multi_folder_outputs2.xlsx")
