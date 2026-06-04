@@ -4,10 +4,62 @@ import numpy as np
 import subprocess
 import json
 
+import torch
+import torch.nn as nn
+import clip
+from PIL import Image
+
 # 视频路径与输出目录
-video_path = r"C:\Users\pablozhao\Desktop\Tubedown Download\【大疆行车记录仪】下午经过上海世纪大道，下班高峰的马路-[pqqw_8TNKzA]-[1920x1080].mp4"
-output_dir = "frames_3"
+video_path = r"C:\Users\pablozhao\Desktop\Tubedown Download\【4K行车记录】琼库什台后山 → 特克斯八卦城 - 新疆最美盘山公路自驾 90公里风景线（上部）-[ekTV1Y9lNcQ]-[1280x720].mp4"
+output_dir = "frames_4"
 os.makedirs(output_dir, exist_ok=True)
+
+
+class AestheticPredictorV2(nn.Module):
+    def __init__(self, input_dim=768):
+        super().__init__()
+        self.input_dim = input_dim
+        self.layers = nn.Sequential(
+            nn.Linear(self.input_dim, 1024),
+            nn.Dropout(0.2),
+            nn.Linear(1024, 128),
+            nn.Dropout(0.2),
+            nn.Linear(128, 64),
+            nn.Dropout(0.1),
+            nn.Linear(64, 16),
+            nn.Linear(16, 1)
+        )
+
+    def forward(self, x):
+        return self.layers(x)
+
+WEIGHT_FILE = "ava+logos-l14-linearMSE.pth"
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print("正在载入 OpenAI CLIP ViT-L/14 ...")
+clip_model, clip_preprocess = clip.load("ViT-L/14", device=device)
+model_aesthetic = AestheticPredictorV2(768).to(device)
+model_aesthetic.load_state_dict(torch.load(WEIGHT_FILE, map_location=device))
+model_aesthetic.eval()
+
+
+def get_laion_v2_score(cv2_frame):
+    """
+    传入本地 OpenCV 读取的单帧图像，输出 LAION V2 美学打分
+    """
+    # 转为 PIL 并经过 CLIP 官方的标准化预处理
+    rgb_frame = cv2.cvtColor(cv2_frame, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(rgb_frame)
+    image_tensor = clip_preprocess(pil_img).unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        # 提取图像特征并进行归一化 (L2 Normalize)
+        image_features = clip_model.encode_image(image_tensor)
+        image_features /= image_features.norm(dim=-1, keepdim=True)
+
+        # 喂入美学层预测
+        prediction = model_aesthetic(image_features.float())
+
+    return prediction.item()
 
 
 def get_video_info(video_path: str) -> dict:
@@ -110,6 +162,9 @@ def is_high_quality(frame, prev_frame=None):
             return False
         else:
             print(f"       [检查通过] 画面有足够物理位移 (ROI帧差 MSE: {diff:.2f})")
+
+    aesthetic_score = get_laion_v2_score(frame)
+    print(f"       [美学得分]  : {aesthetic_score:.3f}")
 
     print(f"       [通过验证] (清晰度: {sharp:.2f} | 亮度: {brightness:.2f})")
     return True
