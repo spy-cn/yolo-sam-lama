@@ -201,3 +201,14 @@ def frame_diff_roi(img1, img2):
 
 if __name__ == "__main__":
     frame_capture_second(5)
+
+
+"""
+整体评分大约在5.5分左右
+1.0 - 3.0 分：废片 / 严重缺陷 (Poor / Defective)
+3.0 - 4.5 分：不及格 / 普通快照 (Below Average / Amateur Snapshot)
+4.5 - 6.0 分：及格 / 良好 (Average / Good)
+6.0 - 7.5 分：优秀 / 专业级 (Very Good / Professional)
+7.5 - 9.0 分：卓越 / 艺术级 (Excellent / Artistic)
+9.0 - 10.0 分：大师级 / 完美 (Masterpiece / Perfect)
+"""
