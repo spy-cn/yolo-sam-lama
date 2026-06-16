@@ -5,7 +5,7 @@ import json
 import io
 from PIL import Image
 
-image_path = "../../data/weather_road/10.jpg"
+image_path = "../../data/wires_road/wires_road_02.jpeg"
 start_time = time.time() * 1000
 
 try:
@@ -42,7 +42,7 @@ payload = {
             "content": [
                 {
                     "type": "text",
-                    "text": prompt_text
+                    "text": "Locate all the instances that matches the following description: wires,electric wire."
                 },
                 {
                     "type": "image_url",
@@ -57,10 +57,9 @@ payload = {
     "response_format": {"type": "json_object"}
 }
 
-url = "http://192.168.21.128:8081/v1/chat/completions"
-headers = {"Content-Type": "application/json"}
+url = "http://192.168.21.128:8003/v1/chat/completions"
+headers  = {"Content-Type": "application/json", "Authorization": "Bearer sk-admin-youtu8b123"}
 
-print("正在发送经过无损兼容重构的图片数据...")
 try:
     res = requests.post(url, headers=headers, json=payload, timeout=60)
     result = res.json()

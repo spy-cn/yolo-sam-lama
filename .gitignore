@@ -1,12 +1,17 @@
 .idea
 models
 data/video
-
+data
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
+*.mp4
+*.pt
+*.pth
+*.xlsx
+google
 # C extensions
 *.so
 

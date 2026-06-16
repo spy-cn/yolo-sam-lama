@@ -45,7 +45,7 @@ if __name__ == "__main__":
     BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
     # 配置输入输出路径
-    INPUT_IMG = str(BASE_DIR / "data/trash_cans" / "roadside_garbage.jpg")
+    INPUT_IMG = str(BASE_DIR / "data/trash_cans" / "conical_barrel_01.jpg")
 
     YOLO_PATH = str(BASE_DIR / "models" / "yolo11n.pt")
     # 提示：默认模型没有单独的垃圾桶类，识别自己的垃圾桶需要替换为 best.pt

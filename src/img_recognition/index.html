@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLM 视频帧实时多模态分析</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #1a1a1a;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+        }
+
+        .config-panel {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eef0f2;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        input[type="text"], textarea, input[type="number"] {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 60px;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+        }
+
+        .btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #status-log {
+            background: #1e293b;
+            color: #38bdf8;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            max-height: 80px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .result-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            gap: 20px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* 💡 新增：跳过项的置灰与虚线样式 */
+        .result-item.skipped {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            box-shadow: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item img {
+            width: 180px;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #e2e8f0;
+            flex-shrink: 0;
+            transition: filter 0.3s;
+        }
+
+        /* 💡 新增：跳过图片的滤镜（变灰、变暗） */
+        .result-item.skipped img {
+            filter: grayscale(80%) opacity(0.6);
+        }
+
+        .result-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .result-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .result-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #334155;
+            white-space: pre-line;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        /* 💡 新增：跳过文本框的警告色 */
+        .result-item.skipped .result-text {
+            border-left: 4px solid #94a3b8;
+            color: #64748b;
+            background: #f1f5f9;
+        }
+
+        .loading-text {
+            color: #eb5757;
+            font-style: italic;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎬 GLM 视频帧实时多模态 analysis 系统</h2>
+
+    <div class="config-panel">
+        <div class="form-group">
+            <label>1. 选择视频文件</label>
+            <input type="file" id="video-file" accept="video/*">
+        </div>
+        <div class="form-group">
+            <label>2. 抽帧间隔 (秒)</label>
+            <input type="number" id="interval-sec" value="5.0" step="0.5" min="0.5">
+        </div>
+        <div class="form-group">
+            <label>3. 输入给 GLM 的提示词 (Prompt)</label>
+            <textarea
+                    id="prompt-input">请分析图片中是否包含动物、植物或建筑物。如果存在，请简单介绍；如果不存在，请回答'未检测到目标'。</textarea>
+        </div>
+        <button class="btn" id="start-btn" onclick="startProcess()">开始上传并分析</button>
+    </div>
+
+    <div id="status-log">系统就绪，请上传视频。</div>
+
+    <h3>📊 实时分析结果 (最新帧置顶)</h3>
+    <div class="result-list" id="result-container"></div>
+</div>
+
+<script>
+    let ws = null;
+
+    function log(msg) {
+        const logDiv = document.getElementById('status-log');
+        logDiv.innerText = msg;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    async function startProcess() {
+        const fileInput = document.getElementById('video-file');
+        const intervalSec = document.getElementById('interval-sec').value;
+        const promptText = document.getElementById('prompt-input').value;
+        const startBtn = document.getElementById('start-btn');
+        const container = document.getElementById('result-container');
+
+        if (!fileInput.files[0]) {
+            alert('请先选择一个视频文件！');
+            return;
+        }
+
+        startBtn.disabled = true;
+        container.innerHTML = '';
+        log("📤 正在上传视频到服务器，请稍候...");
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        try {
+            const response = await fetch('/upload', {method: 'POST', body: formData});
+            const uploadResult = await response.json();
+
+            if (!uploadResult.success) {
+                log("❌ 视频上传失败");
+                startBtn.disabled = false;
+                return;
+            }
+
+            log("✅ 视频上传成功！正在建立 WebSocket 实时 analysis 链路...");
+
+            const loc = window.location;
+            const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
+            const wsUrl = `${wsProtocol}//${loc.host}/ws/analyze`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function () {
+                log("🚀 WebSocket 链路已连接，正在下发任务指令...");
+                ws.send(JSON.stringify({
+                    video_path: uploadResult.video_path,
+                    prompt: promptText,
+                    interval_sec: intervalSec
+                }));
+            };
+
+            ws.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'status') {
+                    log(data.message);
+                }
+                else if (data.type === 'frame_start') {
+                    const itemHtml = `
+                        <div class="result-item" id="frame-${data.time.replace('.', '_')}">
+                            <img src="${data.image}" alt="视频帧">
+                            <div class="result-info">
+                                <div class="result-meta">
+                                    <span>⏱️ 视频时间点: ${data.time}</span>
+                                    <span class="loading-text" id="status-${data.time.replace('.', '_')}">🤖 GLM 正在分析中...</span>
+                                </div>
+                                <div class="result-text" id="text-${data.time.replace('.', '_')}">正在等待大模型返回结果...</div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('afterbegin', itemHtml);
+                }
+                else if (data.type === 'frame_result') {
+                    const idSuffix = data.time.replace('.', '_');
+                    const textDiv = document.getElementById(`text-${idSuffix}`);
+                    const statusSpan = document.getElementById(`status-${idSuffix}`);
+
+                    if (textDiv) textDiv.innerText = data.result;
+                    if (statusSpan) {
+                        statusSpan.classList.remove('loading-text');
+                        statusSpan.style.color = '#10b981';
+                        statusSpan.innerText = `⚡ 推理耗时: ${data.cost}`;
+                    }
+                }
+                // 💡 修改：现在 frame_skip 会带有 image 字段，直接渲染一个带有灰度效果的跳过卡片
+                else if (data.type === 'frame_skip') {
+                    const skipHtml = `
+                        <div class="result-item skipped">
+                            <img src="${data.image}" alt="已跳过视频帧">
+                            <div class="result-info">
+                                <div class="result-meta">
+                                    <span>⏱️ 视频时间点: ${data.time}</span>
+                                    <span style="color: #64748b;">⏭️ 已跳过过滤</span>
+                                </div>
+                                <div class="result-text">💡 跳过原因：${data.reason}</div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('afterbegin', skipHtml);
+                }
+                else if (data.type === 'done') {
+                    log(data.message);
+                    startBtn.disabled = false;
+                    ws.close();
+                }
+                else if (data.type === 'error') {
+                    log("❌ 错误: " + data.message);
+                    startBtn.disabled = false;
+                }
+            };
+
+            ws.onerror = function (err) {
+                log("❌ WebSocket 发生错误");
+                startBtn.disabled = false;
+            };
+
+            ws.onclose = function () {
+                console.log("WebSocket 已关闭");
+                startBtn.disabled = false;
+            };
+
+        } catch (error) {
+            log("❌ 请求失败: " + error.message);
+            startBtn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>

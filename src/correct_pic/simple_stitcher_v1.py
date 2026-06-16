@@ -3,10 +3,10 @@ import cv2
 import numpy as np
 
 ROOT_DIR = Path(__file__).parent.parent.parent
-to_join_img_left = str(ROOT_DIR / "data/to_join_img/4_IMG_8155.JPG")
-to_join_img_right = str(ROOT_DIR / "data/to_join_img/4_IMG_8156.JPG")
-out_path = str(ROOT_DIR / "data/to_join_img/4_result.jpg")
-final_out_puth = str(ROOT_DIR / "data/to_join_img/4_final_result.jpg")
+to_join_img_left = str(ROOT_DIR / "data/to_join_img/5_left.JPG")
+to_join_img_right = str(ROOT_DIR / "data/to_join_img/5_right.JPG")
+out_path = str(ROOT_DIR / "data/to_join_img/5_result.jpg")
+final_out_puth = str(ROOT_DIR / "data/to_join_img/5_final_result.jpg")
 
 
 def simple_correct_img():
@@ -101,4 +101,6 @@ def undistort_image(image_path, output_path):
 
 
 if __name__ == "__main__":
-    undistort_image(final_out_puth, "undistorted_result.jpg")
+    simple_correct_img()
+    remove_black_borders(out_path)
+    undistort_image(final_out_puth, "5_undistorted_result.jpg")
